@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Tracker - SHAFFAF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { background: var(--bg); }
+    .page { max-width: 1320px; margin: 0 auto; padding: 30px 36px 72px; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .breadcrumb { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 22px; color: var(--text-muted); font-size: 13px; }
+    .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--gold); }
+    .crumb-sep { opacity: .45; }
+
+    .tracker-hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(201,168,76,.18), rgba(82,192,122,.08) 38%, var(--surface) 72%);
+      margin-bottom: 18px;
+    }
+    .tracker-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity: .35;
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 26px; padding: 30px; align-items: end; }
+    .hero-eyebrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .hero-title { font-family: "Syne", sans-serif; font-size: clamp(30px, 5vw, 56px); line-height: 1; letter-spacing: -1px; margin-bottom: 14px; }
+    .hero-copy { color: var(--text-sub); max-width: 760px; font-size: 15px; line-height: 1.75; }
+    .hero-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; color: var(--text-muted); font-size: 13px; }
+    .hero-meta span { background: rgba(10,10,11,.42); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; }
+    .hero-side {
+      background: rgba(10,10,11,.52);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 18px;
+      backdrop-filter: blur(16px);
+    }
+    .hero-progress { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+    .ring { width: 112px; height: 112px; position: relative; }
+    .ring svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: rgba(255,255,255,.09); stroke-width: 10; }
+    .ring-fill { fill: none; stroke: var(--gold); stroke-linecap: round; stroke-width: 10; transition: stroke-dashoffset .8s ease; }
+    .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+    .ring-pct { font-family: "Syne", sans-serif; font-size: 25px; font-weight: 800; color: var(--gold); }
+    .ring-sub { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; }
+    .hero-side-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; margin-bottom: 6px; }
+    .hero-side-main { font-family: "Syne", sans-serif; font-size: 19px; font-weight: 800; line-height: 1.2; }
+    .hero-side-note { color: var(--text-muted); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-height: 112px; }
+    .kpi-label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .75px; font-weight: 800; margin-bottom: 8px; }
+    .kpi-value { font-family: "Syne", sans-serif; font-size: 26px; font-weight: 800; line-height: 1.05; }
+    .kpi-sub { color: var(--text-muted); font-size: 12px; margin-top: 6px; line-height: 1.45; }
+
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 22px; align-items: start; }
+    .stack { display: flex; flex-direction: column; gap: 18px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .panel-head { padding: 17px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .panel-title { font-family: "Syne", sans-serif; font-size: 17px; font-weight: 800; }
+    .panel-sub { color: var(--text-muted); font-size: 12px; }
+    .panel-body { padding: 20px; }
+
+    .lookup-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; align-items: stretch; }
+    .lookup-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: end; }
+    .field label { display: block; color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; font-weight: 800; margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%;
+      min-height: 41px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+    }
+    .field input:focus, .field select:focus { border-color: var(--gold-border); box-shadow: 0 0 0 3px rgba(201,168,76,.08); }
+    .lookup-result {
+      margin-top: 14px;
+      border: 1px solid rgba(201,168,76,.28);
+      background: linear-gradient(135deg, rgba(201,168,76,.12), rgba(82,192,122,.06));
+      border-radius: 12px;
+      padding: 15px;
+    }
+    .unit-name { font-family: "Syne", sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .unit-status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .unit-status { background: rgba(10,10,11,.42); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .unit-status b { display: block; font-size: 12px; margin-bottom: 3px; }
+    .unit-status span { color: var(--text-muted); font-size: 11px; }
+    .buyer-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .buyer-card h3 { font-size: 14px; margin-bottom: 10px; }
+    .buyer-list { display: grid; gap: 8px; }
+    .buyer-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; font-size: 12px; }
+    .buyer-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .buyer-row span:first-child { color: var(--text-muted); }
+    .buyer-row span:last-child { text-align: right; font-weight: 700; }
+
+    .building-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 22px; align-items: end; }
+    .building { display: flex; flex-direction: column-reverse; gap: 3px; align-items: stretch; }
+    .floor-row { display: grid; grid-template-columns: 176px 1fr; gap: 10px; align-items: center; }
+    .floor-block { height: 20px; border-radius: 4px; display: grid; place-items: center; font-size: 10px; font-weight: 800; overflow: hidden; position: relative; }
+    .floor-block.done { background: linear-gradient(135deg, #276b45, var(--green)); color: #051008; }
+    .floor-block.active { background: linear-gradient(135deg, #a07a10, var(--gold)); color: #080808; box-shadow: 0 0 18px rgba(201,168,76,.28); }
+    .floor-block.fitout { background: linear-gradient(135deg, #23658f, var(--blue)); color: #051018; }
+    .floor-block.pending { background: var(--bg3); border: 1px dashed var(--border2); color: var(--text-muted); }
+    .floor-label { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+    .floor-label.active { color: var(--gold); font-weight: 800; }
+    .legend { display: grid; gap: 10px; margin-bottom: 18px; }
+    .legend-row { display: flex; gap: 10px; align-items: center; color: var(--text-sub); font-size: 13px; }
+    .swatch { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 auto; }
+    .floor-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .floor-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .floor-stat-num { font-family: "Syne", sans-serif; font-size: 24px; font-weight: 800; }
+    .floor-stat-label { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+
+    .video-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .video-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .video-thumb { aspect-ratio: 16 / 9; position: relative; display: grid; place-items: center; background: linear-gradient(135deg, rgba(82,160,224,.22), rgba(201,168,76,.12)), var(--bg3); }
+    .video-thumb.structure { background: linear-gradient(135deg, rgba(82,192,122,.22), rgba(82,160,224,.12)), var(--bg3); }
+    .video-thumb.authority { background: linear-gradient(135deg, rgba(201,168,76,.24), rgba(224,82,82,.10)), var(--bg3); }
+    .play { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(10,10,11,.72); border: 1px solid var(--border2); color: var(--gold); font-size: 18px; padding-left: 3px; }
+    .video-date { position: absolute; left: 10px; top: 10px; font-size: 10px; color: var(--text); background: rgba(10,10,11,.72); border: 1px solid var(--border); border-radius: 999px; padding: 4px 8px; font-weight: 800; }
+    .video-live { position: absolute; right: 10px; top: 10px; font-size: 10px; color: var(--red); background: rgba(10,10,11,.72); border: 1px solid rgba(224,82,82,.32); border-radius: 999px; padding: 4px 8px; font-weight: 800; }
+    .video-body { padding: 12px; }
+    .video-title { font-weight: 800; font-size: 13px; margin-bottom: 4px; }
+    .video-meta { color: var(--text-muted); font-size: 12px; line-height: 1.45; }
+
+    .timeline { display: grid; gap: 0; }
+    .milestone { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: start; }
+    .milestone:last-child { border-bottom: 0; }
+    .ms-dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; }
+    .ms-dot.done { background: var(--green); color: #06110b; }
+    .ms-dot.active { background: var(--gold); color: #080808; }
+    .ms-dot.pending { background: var(--bg3); border: 1px solid var(--border2); color: var(--text-muted); }
+    .ms-name { font-weight: 800; margin-bottom: 4px; }
+    .ms-date { color: var(--text-muted); font-size: 12px; }
+    .ms-progress { margin-top: 8px; }
+
+    .materials { display: grid; gap: 10px; }
+    .material { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 13px; }
+    .material b { display: block; margin-bottom: 4px; }
+    .material p { color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+
+    .audit-list, .info-list, .stakeholders { display: grid; gap: 0; }
+    .audit-item, .info-row, .stakeholder { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .audit-item:last-child, .info-row:last-child, .stakeholder:last-child { border-bottom: 0; }
+    .audit-item span:first-child, .info-row span:first-child { color: var(--text-muted); }
+    .audit-item span:last-child, .info-row span:last-child { text-align: right; font-weight: 800; }
+    .stakeholder-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-border); font-weight: 900; flex: 0 0 auto; }
+    .cta-panel { background: linear-gradient(135deg, rgba(201,168,76,.14), rgba(82,192,122,.06)); border-color: rgba(201,168,76,.32); }
+
+    @media (max-width: 1120px) {
+      .hero-inner, .main-grid, .lookup-grid, .building-layout { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .site-nav { align-items: flex-start; gap: 12px; flex-direction: column; }
+      .page { padding: 20px 16px 56px; }
+      .hero-inner { padding: 22px; }
+      .kpi-grid, .lookup-form, .unit-status-grid, .video-grid, .floor-summary { grid-template-columns: 1fr; }
+      .floor-row { grid-template-columns: 142px 1fr; }
+      .material { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="index.html" class="logo">SHAFFAF<span>.</span></a>
+    <div class="nav-actions">
+      <a href="search.html" class="btn btn-ghost btn-sm">Browse</a>
+      <a href="dashboard.html" class="btn btn-gold btn-sm">Dashboard</a>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="breadcrumb" id="breadcrumb"></div>
+
+    <section class="tracker-hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-eyebrow" id="heroBadges"></div>
+          <h1 class="hero-title" id="heroTitle">Project Tracker</h1>
+          <p class="hero-copy" id="heroDescription"></p>
+          <div class="hero-meta" id="heroMeta"></div>
+        </div>
+        <aside class="hero-side">
+          <div class="hero-progress">
+            <div class="ring" id="progressRing"></div>
+            <div>
+              <div class="hero-side-title">Investor Readiness</div>
+              <div class="hero-side-main" id="heroReadiness"></div>
+              <div class="hero-side-note" id="heroReadinessNote"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="kpi-grid" id="kpiGrid"></section>
+
+    <section class="main-grid">
+      <div class="stack">
+        <section class="panel cta-panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Buyer Unit Lookup</div>
+              <div class="panel-sub">Use this in the meeting: developer, project, floor, unit, latest proof.</div>
+            </div>
+            <span class="badge badge-gold">Off-plan focus</span>
+          </div>
+          <div class="panel-body lookup-grid">
+            <div>
+              <div class="lookup-form">
+                <div class="field">
+                  <label>Developer</label>
+                  <input id="lookupDeveloper" value="Binghatti Developers" />
+                </div>
+                <div class="field">
+                  <label>Project</label>
+                  <input id="lookupProject" value="One by Binghatti" />
+                </div>
+                <div class="field">
+                  <label>Floor</label>
+                  <input id="lookupFloor" type="number" min="1" value="6" />
+                </div>
+                <div class="field">
+                  <label>Unit</label>
+                  <input id="lookupUnit" value="0608" />
+                </div>
+              </div>
+              <button class="btn btn-gold btn-sm" style="margin-top:10px;" onclick="renderUnitLookup()">Check unit status</button>
+              <div class="lookup-result" id="lookupResult"></div>
+            </div>
+            <aside class="buyer-card">
+              <h3>Meeting demo script</h3>
+              <div class="buyer-list">
+                <div class="buyer-row"><span>Buyer asks</span><span>Is my floor ready?</span></div>
+                <div class="buyer-row"><span>SHAFFAF shows</span><span>Floor + unit proof</span></div>
+                <div class="buyer-row"><span>Company uploads</span><span>Daily site video</span></div>
+                <div class="buyer-row"><span>Authority sees</span><span>Audit trail + approvals</span></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title" id="buildingTitle">Floor Progress</div>
+              <div class="panel-sub" id="buildingSub"></div>
+            </div>
+            <span class="badge badge-green" id="floorBadge"></span>
+          </div>
+          <div class="panel-body building-layout">
+            <div>
+              <div class="building" id="building"></div>
+            </div>
+            <div>
+              <div class="legend">
+                <div class="legend-row"><span class="swatch" style="background:var(--green)"></span> Structure complete and inspected</div>
+                <div class="legend-row"><span class="swatch" style="background:var(--blue)"></span> MEP / fit-out active</div>
+                <div class="legend-row"><span class="swatch" style="background:var(--gold)"></span> Current active floor</div>
+                <div class="legend-row"><span class="swatch" style="background:var(--bg3);border:1px dashed var(--border2)"></span> Pending</div>
+              </div>
+              <div class="floor-summary" id="floorSummary"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Daily Video Updates</div>
+              <div class="panel-sub">Slots are ready for contractor uploads, drone clips, and UAE authority inspection proof.</div>
+            </div>
+            <span class="badge badge-red" id="videoCount"></span>
+          </div>
+          <div class="panel-body">
+            <div class="video-grid" id="videoGrid"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Project Milestones</div>
+            <span class="badge badge-green" id="milestoneBadge"></span>
+          </div>
+          <div class="panel-body timeline" id="milestoneList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Materials, Sources & Suppliers</div>
+              <div class="panel-sub">Evidence surface for submittals, delivery notes, warranties, and inspection records.</div>
+            </div>
+          </div>
+          <div class="panel-body materials" id="materialsList"></div>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Authority Review</div>
+            <span class="badge badge-gold">UAE-ready</span>
+          </div>
+          <div class="panel-body audit-list" id="authorityList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Latest Updates</div>
+              <div class="panel-sub" id="latestUpdated"></div>
+            </div>
+          </div>
+          <div class="panel-body timeline" id="updatesList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div class="panel-title">Project Details</div></div>
+          <div class="panel-body info-list" id="infoList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div class="panel-title">Stakeholders</div></div>
+          <div class="panel-body stakeholders" id="stakeholdersList"></div>
+        </section>
+
+        <section class="panel cta-panel">
+          <div class="panel-body">
+            <div class="panel-title" style="margin-bottom:8px;">Documents & E-Sign</div>
+            <p style="color:var(--text-muted);font-size:13px;line-height:1.6;margin-bottom:14px;">Upload SPA addendums, inspection certificates, handover letters, and authority PDFs in the dashboard. Signed copies keep an audit ID.</p>
+            <a class="btn btn-gold" href="dashboard.html" style="width:100%;">Open document vault</a>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("id") || sessionStorage.getItem("viewingProject") || "p99";
+    const aliases = {
+      "binghatti-emerald": "p99",
+      "one-by-binghatti": "p99",
+      "emaar-skyline": "p1",
+      "marina-heights": "p2"
+    };
+    function getLocalCompanyProject(id) {
+      const localProjects = JSON.parse(localStorage.getItem("SHAFFAF_company_projects") || "[]");
+      const local = localProjects.find(p => p.id === id);
+      if (!local) return null;
+      const totalFloors = Number(local.totalFloors || 20);
+      const progressPct = Math.max(0, Math.min(100, Number(local.progress || 0)));
+      const completedFloors = Math.max(0, Math.min(totalFloors, Math.round(totalFloors * progressPct / 100)));
+      const approval = local.approval || "pending";
+      const uploadedDocsRaw = local.documents || local.documentNames || [];
+      const uploadedDocs = Array.isArray(uploadedDocsRaw) ? uploadedDocsRaw : String(uploadedDocsRaw).split(",").filter(Boolean);
+      return {
+        id: local.id,
+        companyId: "local-company",
+        name: local.name,
+        type: local.type || "Off-plan Residential",
+        location: local.location || "UAE",
+        value: approval === "approved" ? "Approved" : approval === "changes" ? "Changes Requested" : "Pending UAE Authority Approval",
+        startDate: local.createdAt || new Date().toISOString(),
+        endDate: local.handoverDate || "2027-12-31",
+        status: approval === "approved" ? "active" : approval === "changes" ? "delayed" : "pending",
+        totalFloors,
+        completedFloors,
+        currentFloor: Math.min(totalFloors, completedFloors + 1),
+        fitoutFloors: [],
+        progressPct,
+        defaultUnit: local.sampleUnit || "Demo Unit",
+        readinessLabel: approval === "approved" ? "Approved and live" : approval === "changes" ? "Changes requested before publication" : "Waiting for UAE Authority green light",
+        readinessNote: "This project was created by a company user. It is not public until the UAE Authority reviews the signed documents and supplier evidence.",
+        emoji: "🏗️",
+        description: local.description || "Company-submitted off-plan project with mandatory supplier records, signed documents, and UAE Authority approval workflow.",
+        milestones: [
+          { name: "Company project submission", done: true, date: local.createdAt || new Date().toISOString(), pct: 100 },
+          { name: "Supplier evidence uploaded", done: true, date: local.createdAt || new Date().toISOString(), pct: 100 },
+          { name: "Signed documents uploaded", done: true, date: local.createdAt || new Date().toISOString(), pct: 100 },
+          { name: "UAE Authority review", done: approval === "approved", date: local.approvedAt || local.reviewedAt || local.createdAt || new Date().toISOString(), pct: approval === "approved" ? 100 : approval === "changes" ? 65 : 35 },
+          { name: "Publish to buyer/investor portal", done: approval === "approved", date: local.handoverDate || "2027-12-31", pct: approval === "approved" ? 100 : 0 },
+        ],
+        updates: [
+          { date: local.createdAt || new Date().toISOString(), text: approval === "approved" ? "Project approved by UAE Authority and available for live tracking." : approval === "changes" ? "UAE Authority requested changes before publication." : "Project submitted by company. Awaiting UAE Authority review before publishing." },
+          { date: local.createdAt || new Date().toISOString(), text: `Mandatory supplier record submitted: ${local.supplier || "Supplier pending"}.` },
+        ],
+        videoUpdates: [
+          { date: "Upload slot", title: "Daily site video pending", area: "Company upload required after approval", duration: "0:00", status: "PENDING", type: "authority" },
+        ],
+        unitRecords: [
+          {
+            unit: local.sampleUnit || "Demo Unit",
+            floor: Math.max(1, Math.min(totalFloors, completedFloors || 1)),
+            type: "Company submitted sample unit",
+            ready: false,
+            status: approval === "approved" ? "Approved for tracking; construction evidence can now be updated." : approval === "changes" ? "Not published. UAE Authority requested changes to the document package." : "Not published. UAE Authority approval pending.",
+            structure: completedFloors ? "In progress" : "Pending",
+            mep: "Pending",
+            fitout: "Pending",
+            latestVideo: "Awaiting first company upload",
+            note: "Custom projects remain pending until required documents are reviewed."
+          }
+        ],
+        authorityReview: [
+          { label: "Supplier submitted", value: local.supplier ? "Yes" : "Missing", tone: local.supplier ? "green" : "red" },
+          { label: "Signed documents", value: local.signedDeclaration ? "Uploaded" : "Missing", tone: local.signedDeclaration ? "green" : "red" },
+          { label: "Uploaded files", value: uploadedDocs.length ? `${uploadedDocs.length} file(s)` : "Missing", tone: uploadedDocs.length ? "green" : "red" },
+          { label: "UAE Authority status", value: approval === "approved" ? "Approved" : approval === "changes" ? "Changes requested" : "Pending", tone: approval === "approved" ? "green" : approval === "changes" ? "red" : "gold" },
+        ],
+        investors: [local.company || "Company submission"],
+        materials: [
+          { item: "Primary Supplier", source: local.supplier || "Missing", supplier: local.supplier || "Missing", documents: uploadedDocs.join(", ") || "Required before approval" },
+          { item: "Materials / Scope", source: local.materials || "Submitted project package", supplier: local.supplier || "Required supplier", documents: "Signed declaration, supplier certificates, authority review file" },
+        ],
+        budget: { total: 100, spent: approval === "approved" ? 100 : 35, currency: "approval percent" },
+      };
+    }
+
+    let project = SHAFFAF.getProject(aliases[requestedId] || requestedId) || getLocalCompanyProject(requestedId);
+    if (!project) {
+      document.body.innerHTML = '<div style="padding:80px;text-align:center;color:#F0EDE6;font-family:DM Sans,sans-serif;"><h1>Project not found</h1><p style="color:#8A8880;margin:12px 0 22px;">This project ID is not in the live data or company submissions.</p><a href="dashboard.html" class="btn btn-gold">Back to dashboard</a></div>';
+      throw new Error("Project not found");
+    }
+    const company = project.companyId === "local-company" ? { id: "local-company", name: project.investors?.[0] || "Company submission", license: "Pending UAE Authority review" } : SHAFFAF.getCompany(project.companyId);
+
+    const fmtDate = (value) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value || "-";
+      return date.toLocaleDateString("en-AE", { year: "numeric", month: "short", day: "numeric" });
+    };
+
+    function initLookupDefaults() {
+      const firstRecord = (project.unitRecords || [])[0];
+      document.getElementById("lookupDeveloper").value = company?.name || "";
+      document.getElementById("lookupProject").value = project.name || "";
+      document.getElementById("lookupFloor").value = firstRecord?.floor || Math.max(1, Math.min(project.completedFloors || 1, project.totalFloors || 1));
+      document.getElementById("lookupUnit").value = project.defaultUnit || firstRecord?.unit || "";
+    }
+
+    function statusBadge(status) {
+      if (status === "complete") return '<span class="badge badge-green">Complete</span>';
+      if (status === "delayed") return '<span class="badge badge-red">Attention</span>';
+      if (status === "pending") return '<span class="badge badge-gold">Pending Approval</span>';
+      return '<span class="badge badge-gold">Active</span>';
+    }
+
+    function ringMarkup(pct) {
+      const r = 48;
+      const circ = 2 * Math.PI * r;
+      const dash = circ * (1 - pct / 100);
+      return `
+        <svg width="112" height="112" viewBox="0 0 112 112">
+          <circle class="ring-track" cx="56" cy="56" r="${r}"></circle>
+          <circle class="ring-fill" cx="56" cy="56" r="${r}" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-pct">${pct}%</div>
+          <div class="ring-sub">complete</div>
+        </div>
+      `;
+    }
+
+    function renderHero() {
+      document.title = `${project.name} - SHAFFAF Tracker`;
+      document.getElementById("breadcrumb").innerHTML = `
+        <a href="index.html">Home</a><span class="crumb-sep">/</span>
+        <a href="search.html">Companies</a><span class="crumb-sep">/</span>
+        <a href="company-profile.html?id=${company?.id || ""}">${company?.name || "Company"}</a><span class="crumb-sep">/</span>
+        <span style="color:var(--text)">${project.name}</span>
+      `;
+      document.getElementById("heroBadges").innerHTML = `
+        ${statusBadge(project.status)}
+        <span class="badge badge-green">Authority visible</span>
+        <span class="badge badge-blue">Video-ready</span>
+      `;
+      document.getElementById("heroTitle").textContent = project.name;
+      document.getElementById("heroDescription").textContent = project.description || "Live off-plan construction tracker with floor progress, video evidence, material records, and authority review.";
+      document.getElementById("heroMeta").innerHTML = `
+        <span>${project.location}</span>
+        <span>${project.type}</span>
+        <span>${fmtDate(project.startDate)} to ${fmtDate(project.endDate)}</span>
+        <span>${company?.license || "Authority license pending"}</span>
+      `;
+      document.getElementById("progressRing").innerHTML = ringMarkup(project.progressPct);
+      document.getElementById("heroReadiness").textContent = project.readinessLabel || `${project.completedFloors || 0} floors completed`;
+      document.getElementById("heroReadinessNote").textContent = project.readinessNote || "Investor-facing progress is linked to milestones, site updates, and document evidence.";
+    }
+
+    function renderKpis() {
+      const daysLeft = project.status === "complete" ? "-" : Math.max(0, Math.round((new Date(project.endDate) - new Date()) / 86400000));
+      const materialPct = Math.round((project.budget?.spent || 0) / (project.budget?.total || 1) * 100);
+      const doneMs = project.milestones.filter(m => m.done).length;
+      const videos = project.videoUpdates || [];
+      const floorText = project.totalFloors ? `${project.completedFloors}/${project.totalFloors}` : "N/A";
+      document.getElementById("kpiGrid").innerHTML = `
+        <div class="kpi"><div class="kpi-label">Overall Progress</div><div class="kpi-value" style="color:var(--gold)">${project.progressPct}%</div><div class="kpi-sub">Current project completion</div></div>
+        <div class="kpi"><div class="kpi-label">Floors Ready</div><div class="kpi-value">${floorText}</div><div class="kpi-sub">${project.totalFloors ? "Structure / fit-out tracked" : "Phase-based project"}</div></div>
+        <div class="kpi"><div class="kpi-label">Unit Status</div><div class="kpi-value">${project.defaultUnit || "Search"}</div><div class="kpi-sub">Buyer can check exact unit</div></div>
+        <div class="kpi"><div class="kpi-label">Video Evidence</div><div class="kpi-value" style="color:var(--blue)">${videos.length}</div><div class="kpi-sub">Daily/weekly upload slots</div></div>
+        <div class="kpi"><div class="kpi-label">Materials Ready</div><div class="kpi-value">${materialPct}%</div><div class="kpi-sub">Submittals and suppliers</div></div>
+        <div class="kpi"><div class="kpi-label">${project.status === "complete" ? "Completed" : "Days Left"}</div><div class="kpi-value" style="color:${daysLeft !== "-" && daysLeft < 90 ? "var(--red)" : "var(--text)"}">${daysLeft}</div><div class="kpi-sub">To target handover</div></div>
+      `;
+      document.getElementById("milestoneBadge").textContent = `${doneMs}/${project.milestones.length} done`;
+    }
+
+    function renderUnitLookup() {
+      const unit = document.getElementById("lookupUnit").value.trim() || project.defaultUnit || "0608";
+      const floor = Number(document.getElementById("lookupFloor").value || 6);
+      const record = (project.unitRecords || []).find(u => String(u.unit).toLowerCase() === unit.toLowerCase()) ||
+        (project.unitRecords || []).find(u => Number(u.floor) === floor) ||
+        {
+          unit,
+          floor,
+          type: "Buyer unit",
+          ready: false,
+          status: floor <= project.completedFloors ? "Structure complete; fit-out evidence pending" : "Not ready",
+          structure: floor <= project.completedFloors ? "Complete" : "Pending",
+          mep: floor <= Math.max(0, project.completedFloors - 3) ? "Active" : "Pending",
+          fitout: "Pending",
+          latestVideo: (project.videoUpdates || [])[0]?.date || "Awaiting upload",
+          note: "No unit-specific record has been uploaded yet, so SHAFFAF falls back to floor-level status."
+        };
+
+      const readyLabel = record.ready ? '<span class="badge badge-green">Ready for buyer review</span>' : '<span class="badge badge-gold">Not ready for handover</span>';
+      document.getElementById("lookupResult").innerHTML = `
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:start;flex-wrap:wrap;">
+          <div>
+            <div class="unit-name">Unit ${record.unit} - Floor ${record.floor}</div>
+            <div style="color:var(--text-sub);font-size:13px;line-height:1.6;">${record.type || "Residential unit"}: ${record.status}</div>
+          </div>
+          ${readyLabel}
+        </div>
+        <div class="unit-status-grid">
+          <div class="unit-status"><b>Structure</b><span>${record.structure}</span></div>
+          <div class="unit-status"><b>MEP</b><span>${record.mep}</span></div>
+          <div class="unit-status"><b>Fit-out</b><span>${record.fitout}</span></div>
+        </div>
+        <div style="color:var(--text-muted);font-size:12px;line-height:1.55;margin-top:12px;">Latest video proof: <b style="color:var(--text)">${record.latestVideo}</b>. ${record.note}</div>
+      `;
+    }
+
+    function renderBuilding() {
+      if (!project.totalFloors) {
+        document.getElementById("buildingTitle").textContent = "Phase Progress";
+        document.getElementById("buildingSub").textContent = "Non-floor project";
+        document.getElementById("floorBadge").textContent = `${project.progressPct}%`;
+        document.getElementById("building").innerHTML = project.milestones.map(m => `<div class="floor-row"><div class="floor-block ${m.done ? "done" : (m.pct || 0) > 0 ? "active" : "pending"}">${m.done ? "Done" : (m.pct || 0) + "%"}</div><span class="floor-label">${m.name}</span></div>`).join("");
+        return;
+      }
+
+      const fitoutFloors = project.fitoutFloors || [];
+      const currentFloor = project.currentFloor || project.completedFloors + 1;
+      document.getElementById("buildingTitle").textContent = "Floor-by-Floor Progress";
+      document.getElementById("buildingSub").textContent = `${project.totalFloors} floors tracked with buyer-facing status.`;
+      document.getElementById("floorBadge").textContent = `${project.completedFloors} of ${project.totalFloors} floors`;
+
+      const floors = [];
+      for (let f = 1; f <= project.totalFloors; f++) {
+        let state = "pending";
+        if (fitoutFloors.includes(f)) state = "fitout";
+        else if (f <= project.completedFloors) state = "done";
+        if (f === currentFloor) state = "active";
+        floors.push({ f, state });
+      }
+
+      document.getElementById("building").innerHTML = floors.map(({ f, state }) => `
+        <div class="floor-row" title="Floor ${f} - ${state}">
+          <div class="floor-block ${state}">${state === "active" ? "Active" : state === "done" ? "Done" : state === "fitout" ? "Fit-out" : ""}</div>
+          <span class="floor-label ${state === "active" ? "active" : ""}">${f === 1 ? "Ground / Floor 1" : "Floor " + f}</span>
+        </div>
+      `).reverse().join("");
+
+      document.getElementById("floorSummary").innerHTML = `
+        <div class="floor-stat"><div class="floor-stat-num" style="color:var(--green)">${project.completedFloors}</div><div class="floor-stat-label">Structure complete</div></div>
+        <div class="floor-stat"><div class="floor-stat-num" style="color:var(--gold)">${currentFloor}</div><div class="floor-stat-label">Current active floor</div></div>
+        <div class="floor-stat"><div class="floor-stat-num" style="color:var(--blue)">${fitoutFloors.length}</div><div class="floor-stat-label">MEP / fit-out active</div></div>
+        <div class="floor-stat"><div class="floor-stat-num">${Math.max(0, project.totalFloors - project.completedFloors)}</div><div class="floor-stat-label">Pending floors</div></div>
+      `;
+    }
+
+    function renderVideos() {
+      const videos = project.videoUpdates || [];
+      document.getElementById("videoCount").textContent = `${videos.length || 0} slots`;
+      document.getElementById("videoGrid").innerHTML = (videos.length ? videos : [
+        { date: "Upload slot", title: "Daily site walk-through", area: "Contractor upload pending", duration: "0:00", type: "structure" }
+      ]).map((v, idx) => `
+        <article class="video-card">
+          <div class="video-thumb ${v.type || (idx % 2 ? "authority" : "structure")}">
+            <span class="video-date">${v.date}</span>
+            <span class="video-live">${v.status || "READY"}</span>
+            <div class="play">▶</div>
+          </div>
+          <div class="video-body">
+            <div class="video-title">${v.title}</div>
+            <div class="video-meta">${v.area || "Site evidence"} · ${v.duration || "Upload pending"}</div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderMilestones() {
+      document.getElementById("milestoneList").innerHTML = project.milestones.map((m, i) => {
+        const pct = m.done ? 100 : (m.pct || 0);
+        const state = m.done ? "done" : pct > 0 ? "active" : "pending";
+        return `
+          <div class="milestone">
+            <div class="ms-dot ${state}">${m.done ? "✓" : pct > 0 ? ">" : i + 1}</div>
+            <div>
+              <div class="ms-name">${m.name}</div>
+              <div class="ms-date">${m.done ? "Completed " : "Target "}${fmtDate(m.date)}</div>
+              ${pct > 0 && pct < 100 ? `<div class="ms-progress"><div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div><div style="font-size:11px;color:var(--gold);margin-top:4px;">${pct}% in progress</div></div>` : ""}
+            </div>
+            <span class="badge ${state === "done" ? "badge-green" : state === "active" ? "badge-gold" : "badge-muted"}">${state}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderMaterials() {
+      document.getElementById("materialsList").innerHTML = (project.materials || []).map(m => `
+        <article class="material">
+          <div>
+            <b>${m.item}</b>
+            <p>Source: ${m.source}<br>Supplier: ${m.supplier}<br>Documents: ${m.documents}</p>
+          </div>
+          <span class="badge badge-green">Tracked</span>
+        </article>
+      `).join("");
+    }
+
+    function renderAuthority() {
+      const list = project.authorityReview || [
+        { label: "Trade license", value: "Verified", tone: "green" },
+        { label: "Daily video evidence", value: "Ready", tone: "gold" },
+        { label: "Document audit trail", value: "Enabled", tone: "green" },
+        { label: "Final inspection", value: "Pending", tone: "muted" }
+      ];
+      document.getElementById("authorityList").innerHTML = list.map(item => `
+        <div class="audit-item"><span>${item.label}</span><span class="badge badge-${item.tone || "gold"}">${item.value}</span></div>
+      `).join("");
+    }
+
+    function renderUpdates() {
+      const updates = project.updates || [];
+      document.getElementById("latestUpdated").textContent = updates[0] ? `Latest: ${fmtDate(updates[0].date)}` : "Awaiting first update";
+      document.getElementById("updatesList").innerHTML = updates.map(u => `
+        <div class="milestone" style="grid-template-columns:18px 1fr;">
+          <div class="update-dot" style="width:8px;height:8px;background:var(--gold);border-radius:50%;margin-top:6px;"></div>
+          <div><div class="ms-date">${fmtDate(u.date)}</div><div style="font-size:13px;color:var(--text-sub);line-height:1.5;">${u.text}</div></div>
+        </div>
+      `).join("");
+    }
+
+    function renderInfo() {
+      const rows = [
+        ["Company", company?.name || "-"],
+        ["Location", project.location],
+        ["Project type", project.type],
+        ["Start", fmtDate(project.startDate)],
+        ["Target handover", fmtDate(project.endDate)],
+        ["Status", project.status],
+        ["Floors", project.totalFloors ? String(project.totalFloors) : "N/A"],
+        ["License", company?.license || "Pending"]
+      ];
+      if (project.registeredUnits) rows.splice(3, 0, ["Registered units", String(project.registeredUnits)]);
+      if (project.paymentPlan) rows.splice(4, 0, ["Payment plan", project.paymentPlan]);
+      document.getElementById("infoList").innerHTML = rows.map(([label, value]) => `<div class="info-row"><span>${label}</span><span>${value}</span></div>`).join("");
+    }
+
+    function renderStakeholders() {
+      document.getElementById("stakeholdersList").innerHTML = (project.investors || ["Demo Investor"]).map(name => `
+        <div class="stakeholder">
+          <div class="stakeholder-left"><div class="avatar">${String(name).charAt(0).toUpperCase()}</div><strong>${name}</strong></div>
+          <span class="badge badge-green">Access</span>
+        </div>
+      `).join("");
+    }
+
+    initLookupDefaults();
+    renderHero();
+    renderKpis();
+    renderUnitLookup();
+    renderBuilding();
+    renderVideos();
+    renderMilestones();
+    renderMaterials();
+    renderAuthority();
+    renderUpdates();
+    renderInfo();
+    renderStakeholders();
+  </script>
+</body>
+</html>
