@@ -17,7 +17,6 @@
       min-height: calc(100vh - 65px);
     }
 
-    /* SIDEBAR FILTERS */
     .filter-sidebar {
       width: 260px;
       flex-shrink: 0;
@@ -86,7 +85,6 @@
       color: #0A0A0B;
     }
 
-    /* RANGE SLIDER */
     .range-wrap {
       padding: 4px 0;
     }
@@ -139,7 +137,6 @@
       color: var(--red);
     }
 
-    /* RESULTS AREA */
     .results-area {
       flex: 1;
       padding: 28px 32px;
@@ -202,14 +199,12 @@
       border-color: var(--border2);
     }
 
-    /* GRID VIEW */
     .companies-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
     }
 
-    /* LIST VIEW */
     .companies-list {
       display: flex;
       flex-direction: column;
@@ -288,7 +283,6 @@
       margin-top: 4px;
     }
 
-    /* COMPANY CARD (grid) */
     .company-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -397,7 +391,6 @@
       color: var(--gold);
     }
 
-    /* SEARCH BAR TOP */
     .search-top {
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
@@ -443,7 +436,6 @@
       color: var(--text-muted);
     }
 
-    /* ACTIVE FILTERS ROW */
     .active-filters {
       display: flex;
       gap: 8px;
@@ -473,7 +465,6 @@
       padding: 0;
     }
 
-    /* PAGINATION */
     .pagination {
       display: flex;
       justify-content: center;
@@ -508,6 +499,48 @@
       background: var(--gold);
       border-color: var(--gold);
       color: #0A0A0B;
+    }
+
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .source-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-left: 8px;
+    }
+
+    .source-live {
+      background: rgba(82, 192, 122, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(82, 192, 122, 0.3);
+    }
+
+    .source-mock {
+      background: rgba(201, 168, 76, 0.1);
+      color: var(--gold);
+      border: 1px solid rgba(201, 168, 76, 0.2);
     }
 
     @media (max-width: 900px) {
@@ -547,7 +580,6 @@
   <div class="page-layout">
     <!-- FILTER SIDEBAR -->
     <aside class="filter-sidebar">
-      <!-- Speciality -->
       <div class="filter-section">
         <div class="filter-section-title">Speciality</div>
         <div class="filter-option selected" onclick="toggleFilter('spec','all',this)" data-val="all">
@@ -570,22 +602,17 @@
         </div>
       </div>
 
-      <!-- Location -->
       <div class="filter-section">
         <div class="filter-section-title">Location</div>
-        <div class="filter-option" onclick="toggleFilter('loc','Marina District, UAE',this)"><span class="check"></span>
-          Marina District, UAE</div>
-        <div class="filter-option" onclick="toggleFilter('loc','Business Bay',this)"><span class="check"></span>
-          Business Bay</div>
+        <div class="filter-option" onclick="toggleFilter('loc','Marina District, UAE',this)"><span class="check"></span> Marina District, UAE</div>
+        <div class="filter-option" onclick="toggleFilter('loc','Business Bay',this)"><span class="check"></span> Business Bay</div>
         <div class="filter-option" onclick="toggleFilter('loc','DIFC',this)"><span class="check"></span> DIFC</div>
         <div class="filter-option" onclick="toggleFilter('loc','JLT',this)"><span class="check"></span> JLT</div>
         <div class="filter-option" onclick="toggleFilter('loc','JVC',this)"><span class="check"></span> JVC</div>
-        <div class="filter-option" onclick="toggleFilter('loc','Palm Jumeirah',this)"><span class="check"></span> Palm
-          Jumeirah</div>
+        <div class="filter-option" onclick="toggleFilter('loc','Palm Jumeirah',this)"><span class="check"></span> Palm Jumeirah</div>
         <div class="filter-option" onclick="toggleFilter('loc','Deira',this)"><span class="check"></span> Deira</div>
       </div>
 
-      <!-- Rating -->
       <div class="filter-section">
         <div class="filter-section-title">Minimum Rating</div>
         <div class="range-wrap">
@@ -596,7 +623,6 @@
         </div>
       </div>
 
-      <!-- Verified only -->
       <div class="filter-section">
         <div class="filter-section-title">Status</div>
         <div class="filter-option selected" onclick="toggleFilter('verified','true',this)">
@@ -612,7 +638,10 @@
       <div id="activeFiltersRow" class="active-filters"></div>
 
       <div class="results-topbar">
-        <div class="results-count"><strong id="resultsNum">6</strong> companies found</div>
+        <div class="results-count">
+          <strong id="resultsNum">—</strong> companies found
+          <span id="sourceBadge" class="source-badge" style="display:none;"></span>
+        </div>
         <div style="display:flex; gap:10px; align-items:center;">
           <select class="sort-select" id="sortSelect" onchange="applyFilters()">
             <option value="rating">Sort: Highest Rated</option>
@@ -627,14 +656,24 @@
         </div>
       </div>
 
-      <div id="companyResults"></div>
+      <div id="companyResults">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          Loading companies...
+        </div>
+      </div>
 
       <div class="pagination" id="pagination"></div>
     </div>
   </div>
 
   <script>
-    const ALL_COMPANIES = [
+    const API_URL = 'https://shaffaf-backend.onrender.com';
+    let ALL_COMPANIES = [];
+    let dataSource = 'mock'; // 'live' or 'mock'
+
+    // ─── MOCK DATA (fallback əgər backend cavab verməsə) ───────────────────────
+    const MOCK_COMPANIES = [
       { id: 'c1', name: 'Al Fardan Construction LLC', category: 'commercial', emoji: '🏢', location: 'Marina District, UAE', projects: 47, rating: 4.9, reviews: 124, founded: 2008, verified: true, specialties: ['High-Rise', 'Commercial', 'Mixed-Use'], license: 'UAE-MUN-CON-2008-447', desc: 'Premium commercial construction with 15+ years across the UAE.' },
       { id: 'c2', name: 'GoldenBuild Renovations', category: 'renovation', emoji: '🔨', location: 'Business Bay', projects: 312, rating: 4.8, reviews: 88, founded: 2014, verified: true, specialties: ['Renovation', 'Fit-Out', 'Interior'], license: 'UAE-MUN-REN-2014-891', desc: 'End-to-end renovation specialists for residential and commercial spaces.' },
       { id: 'c3', name: 'Nakheel Infrastructure Partners', category: 'infrastructure', emoji: '🌉', location: 'Deira', projects: 28, rating: 5.0, reviews: 41, founded: 2006, verified: true, specialties: ['Infrastructure', 'Roads', 'Civil'], license: 'UAE-MUN-INF-2006-112', desc: 'Large-scale civil and infrastructure works across the UAE.' },
@@ -650,6 +689,64 @@
       { id: 'c13', name: 'Binghatti Developers', category: 'residential', emoji: '🏙️', location: 'Business Bay, UAE', projects: 1, rating: 4.9, reviews: 62, founded: 2008, verified: true, specialties: ['Residential', 'High-Rise', 'Off-Plan Tracker'], license: 'UAE-MUN-DEV-2008-404', desc: 'Real UAE off-plan developer profile connected to One by Binghatti in Business Bay, with floor progress, unit lookup, daily videos, milestones and investor updates.' },
     ];
 
+    // ─── BACKEND-DƏN YÜKLƏYİR, xəta olsa mock işlədər ────────────────────────
+    async function loadCompanies() {
+      try {
+        const token = localStorage.getItem('SHAFFAF_access');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        const res = await fetch(`${API_URL}/api/companies/`, { headers });
+
+        if (res.ok) {
+          const data = await res.json();
+          // Backend results və ya results.data formatını handle edir
+          ALL_COMPANIES = normalizeCompanies(data.results || data);
+          dataSource = 'live';
+        } else {
+          throw new Error('Backend ' + res.status);
+        }
+      } catch (e) {
+        console.warn('Backend əlçatmaz, mock data işlədilir:', e.message);
+        ALL_COMPANIES = MOCK_COMPANIES;
+        dataSource = 'mock';
+      }
+
+      // Source badge göstər
+      const badge = document.getElementById('sourceBadge');
+      if (dataSource === 'live') {
+        badge.textContent = '● Live';
+        badge.className = 'source-badge source-live';
+      } else {
+        badge.textContent = '● Demo';
+        badge.className = 'source-badge source-mock';
+      }
+      badge.style.display = 'inline-flex';
+
+      applyFilters();
+    }
+
+    // Backend-dən gələn formatı normalize edir (field adları fərqli ola bilər)
+    function normalizeCompanies(raw) {
+      if (!Array.isArray(raw)) return MOCK_COMPANIES;
+      return raw.map(c => ({
+        id: c.id || c.slug || String(Math.random()),
+        name: c.name || c.company_name || 'Unknown',
+        category: (c.category || c.speciality || 'commercial').toLowerCase(),
+        emoji: c.emoji || '🏢',
+        location: c.location || c.city || 'UAE',
+        projects: c.projects || c.project_count || 0,
+        rating: parseFloat(c.rating) || 4.5,
+        reviews: c.reviews || c.review_count || 0,
+        founded: c.founded || c.established_year || 2010,
+        verified: c.verified !== undefined ? c.verified : true,
+        specialties: c.specialties || (c.speciality ? [c.speciality] : ['General']),
+        license: c.license || c.license_number || '',
+        desc: c.desc || c.description || '',
+      }));
+    }
+
+    // ─── FİLTER & SORT ────────────────────────────────────────────────────────
     let activeView = 'grid';
     let activeFilters = { specs: [], locs: [], verified: true };
     let currentPage = 1;
@@ -708,6 +805,8 @@
     }
 
     function applyFilters(resetPage = true) {
+      if (!ALL_COMPANIES.length) return;
+
       const q = document.getElementById('mainSearch').value.toLowerCase();
       const minRating = parseFloat(document.getElementById('ratingRange').value);
       const sort = document.getElementById('sortSelect').value;
@@ -746,44 +845,48 @@
       if (activeView === 'grid') {
         container.className = 'companies-grid';
         container.innerHTML = page.map(c => `
-      <a class="company-card" href="company-profile.html?id=${c.id}" onclick="sessionStorage.setItem('viewingCompany','${c.id}')">
-        <div class="card-thumb">
-          <span>${c.emoji}</span>
-          ${c.verified ? '<span class="v-badge">✓ Verified</span>' : ''}
-          <span class="pc-badge">${c.projects} projects</span>
-        </div>
-        <div class="card-body">
-          <div class="card-name">${c.name}</div>
-          <div class="card-meta"><span>📍 ${c.location}</span><span>📅 Est. ${c.founded}</span></div>
-          <div class="specs">${c.specialties.map(s => `<span class="spec">${s}</span>`).join('')}</div>
-        </div>
-        <div class="card-footer">
-          <div class="card-rating"><span class="star">★</span> ${c.rating} <span style="color:var(--text-muted);font-weight:400;">(${c.reviews})</span></div>
-          <span style="display:flex;gap:8px;align-items:center;"><button onclick="saveProjectFromSearch(event,'${c.id}','${c.name}')" style="background:#C9A84C;color:#080808;border:0;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;">Save</button><span style="font-size:12px;color:var(--gold);font-weight:600;">View →</span></span>
-        </div>
-      </a>
-    `).join('');
+          <a class="company-card" href="company-profile.html?id=${c.id}" onclick="sessionStorage.setItem('viewingCompany','${c.id}')">
+            <div class="card-thumb">
+              <span>${c.emoji}</span>
+              ${c.verified ? '<span class="v-badge">✓ Verified</span>' : ''}
+              <span class="pc-badge">${c.projects} projects</span>
+            </div>
+            <div class="card-body">
+              <div class="card-name">${c.name}</div>
+              <div class="card-meta"><span>📍 ${c.location}</span><span>📅 Est. ${c.founded}</span></div>
+              <div class="specs">${c.specialties.map(s => `<span class="spec">${s}</span>`).join('')}</div>
+            </div>
+            <div class="card-footer">
+              <div class="card-rating"><span class="star">★</span> ${c.rating} <span style="color:var(--text-muted);font-weight:400;">(${c.reviews})</span></div>
+              <span style="display:flex;gap:8px;align-items:center;">
+                <button onclick="saveProjectFromSearch(event,'${c.id}','${c.name}')" style="background:#C9A84C;color:#080808;border:0;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;">Save</button>
+                <span style="font-size:12px;color:var(--gold);font-weight:600;">View →</span>
+              </span>
+            </div>
+          </a>
+        `).join('');
       } else {
         container.className = 'companies-list';
         container.innerHTML = page.map(c => `
-      <a class="company-list-item" href="company-profile.html?id=${c.id}" onclick="sessionStorage.setItem('viewingCompany','${c.id}')">
-        <div class="list-emoji">${c.emoji}</div>
-        <div class="list-info">
-          <div class="list-name">${c.name}</div>
-          <div class="list-meta">
-            <span>📍 ${c.location}</span>
-            <span>📅 Est. ${c.founded}</span>
-            <span>🪪 ${c.license}</span>
-          </div>
-          <div class="specs" style="margin-top:8px;">${c.specialties.map(s => `<span class="spec">${s}</span>`).join('')}</div>
-        </div>
-        <div class="list-right">
-          <div class="list-rating"><span class="star">★</span> ${c.rating}</div>
-          <div class="list-projects">${c.projects} projects</div>
-          ${c.verified ? '<span class="badge badge-green" style="margin-top:6px;">✓ Verified</span>' : ''}<button onclick="saveProjectFromSearch(event,'${c.id}','${c.name}')" style="margin-top:8px;background:#C9A84C;color:#080808;border:0;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;">Save Project</button>
-        </div>
-      </a>
-    `).join('');
+          <a class="company-list-item" href="company-profile.html?id=${c.id}" onclick="sessionStorage.setItem('viewingCompany','${c.id}')">
+            <div class="list-emoji">${c.emoji}</div>
+            <div class="list-info">
+              <div class="list-name">${c.name}</div>
+              <div class="list-meta">
+                <span>📍 ${c.location}</span>
+                <span>📅 Est. ${c.founded}</span>
+                ${c.license ? `<span>🪪 ${c.license}</span>` : ''}
+              </div>
+              <div class="specs" style="margin-top:8px;">${c.specialties.map(s => `<span class="spec">${s}</span>`).join('')}</div>
+            </div>
+            <div class="list-right">
+              <div class="list-rating"><span class="star">★</span> ${c.rating}</div>
+              <div class="list-projects">${c.projects} projects</div>
+              ${c.verified ? '<span class="badge badge-green" style="margin-top:6px;">✓ Verified</span>' : ''}
+              <button onclick="saveProjectFromSearch(event,'${c.id}','${c.name}')" style="margin-top:8px;background:#C9A84C;color:#080808;border:0;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;">Save Project</button>
+            </div>
+          </a>
+        `).join('');
       }
     }
 
@@ -822,7 +925,6 @@
       applyFilters();
     }
 
-
     function saveProjectFromSearch(e, id, name) {
       e.preventDefault();
       e.stopPropagation();
@@ -836,7 +938,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('ratingRange').style.setProperty('--pct', '75%');
-      applyFilters();
+      loadCompanies();
     });
   </script>
 </body>
