@@ -3,11 +3,14 @@
 // Passwords here are hashed client-side for demo. Real auth = server-side bcrypt.
 
 // ── Simple hash for demo (in production use bcrypt on server) ──
+
+const API_URL = 'https://shaffaf-backend.onrender.com';
+
 async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'SHAFFAF_salt_2025');
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ── Mock Company Data ──
@@ -207,7 +210,7 @@ function closeModal() {
   document.getElementById('authModal').classList.remove('open');
 }
 
-document.getElementById('authModal')?.addEventListener('click', function(e) {
+document.getElementById('authModal')?.addEventListener('click', function (e) {
   if (e.target === this) closeModal();
 });
 
@@ -265,21 +268,38 @@ async function handleLogin() {
   if (!email || !password) return showError('loginError', 'Please fill in all fields.');
   if (!validateEmail(email)) return showError('loginError', 'Invalid email address.');
 
-  // Get stored users
-  const users = JSON.parse(localStorage.getItem('SHAFFAF_users') || '[]');
-  const hashed = await hashPassword(password);
-  const user = users.find(u => u.email === email && u.passwordHash === hashed);
+  try {
+    const res = await fetch(`${API_URL}/api/auth/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-  if (!user) return showError('loginError', 'Invalid email or password.');
+    const data = await res.json();
 
-  // Create session
-  const session = { userId: user.id, email: user.email, name: user.firstName, type: user.type, loginAt: Date.now() };
-  sessionStorage.setItem('SHAFFAF_session', JSON.stringify(session));
-  localStorage.setItem('SHAFFAF_role', user.type || 'client');
+    if (!res.ok) {
+      return showError('loginError', data.detail || 'Invalid email or password.');
+    }
 
-  // Redirect to dashboard
-  closeModal();
-  window.location.href = 'dashboard.html';
+    // Token və session saxla
+    localStorage.setItem('SHAFFAF_access', data.access);
+    localStorage.setItem('SHAFFAF_refresh', data.refresh);
+    const session = {
+      userId: data.user.id,
+      email: data.user.email,
+      name: data.user.first_name,
+      type: data.user.role,
+      loginAt: Date.now()
+    };
+    sessionStorage.setItem('SHAFFAF_session', JSON.stringify(session));
+    localStorage.setItem('SHAFFAF_role', data.user.role);
+
+    closeModal();
+    window.location.href = 'dashboard.html';
+
+  } catch (err) {
+    showError('loginError', 'Server xətası. Yenidən cəhd edin.');
+  }
 }
 
 // ── Signup ──
@@ -296,35 +316,49 @@ async function handleSignup() {
   if (pass.length < 8) return showError('signupError', 'Password must be at least 8 characters.');
   if (pass !== passConfirm) return showError('signupError', 'Passwords do not match.');
 
-  const users = JSON.parse(localStorage.getItem('SHAFFAF_users') || '[]');
-  if (users.find(u => u.email === email)) return showError('signupError', 'An account with this email already exists.');
+  try {
+    const res = await fetch(`${API_URL}/api/auth/register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        first_name: first,
+        last_name: last,
+        role: type,
+        password: pass,
+        password2: passConfirm
+      })
+    });
 
-  const hashed = await hashPassword(pass);
-  const newUser = {
-    id: 'u_' + Date.now(),
-    type,
-    firstName: first,
-    lastName: last,
-    email,
-    passwordHash: hashed,
-    createdAt: new Date().toISOString(),
-    verified: false
-  };
+    const data = await res.json();
 
-  users.push(newUser);
-  localStorage.setItem('SHAFFAF_users', JSON.stringify(users));
+    if (!res.ok) {
+      const errMsg = data.email?.[0] || data.password?.[0] || data.detail || 'Registration failed.';
+      return showError('signupError', errMsg);
+    }
 
-  // Auto-login
-  const session = { userId: newUser.id, email, name: first, type, loginAt: Date.now() };
-  sessionStorage.setItem('SHAFFAF_session', JSON.stringify(session));
-  localStorage.setItem('SHAFFAF_role', type);
+    // Token və session saxla
+    localStorage.setItem('SHAFFAF_access', data.access);
+    localStorage.setItem('SHAFFAF_refresh', data.refresh);
+    const session = {
+      userId: data.user.id,
+      email: data.user.email,
+      name: data.user.first_name,
+      type: data.user.role,
+      loginAt: Date.now()
+    };
+    sessionStorage.setItem('SHAFFAF_session', JSON.stringify(session));
+    localStorage.setItem('SHAFFAF_role', data.user.role);
 
-  showSuccess('signupSuccess', '✓ Account created! Redirecting to your dashboard...');
+    showSuccess('signupSuccess', '✓ Account created! Redirecting...');
+    setTimeout(() => {
+      closeModal();
+      window.location.href = 'dashboard.html';
+    }, 1500);
 
-  setTimeout(() => {
-    closeModal();
-    window.location.href = 'dashboard.html';
-  }, 1500);
+  } catch (err) {
+    showError('signupError', 'Server xətası. Yenidən cəhd edin.');
+  }
 }
 
 // ── Init ──
