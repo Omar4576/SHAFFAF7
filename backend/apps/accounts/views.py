@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .serializers import RegisterSerializer, UserSerializer, SHAFFAFTokenSerializer
+from rest_framework_simplejwt.views import TokenVerifyView
 
 User = get_user_model()
 
@@ -47,3 +48,7 @@ class MeView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class VerifyTokenView(TokenVerifyView):
+    permission_classes = [AllowAny]
