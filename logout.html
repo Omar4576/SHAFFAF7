@@ -83,7 +83,25 @@
         <p>Your SHAFFAF demo session has been cleared. Go back home or open the dashboard again to choose a role.</p><a
             class="btn gold" href="index.html">Back Home</a><a class="btn ghost" href="dashboard.html">Dashboard</a>
     </div>
-    <script>localStorage.removeItem('SHAFFAF_user_session');</script>
+    
+    <script>
+        // Backend-ə logout bildir
+        const refresh = localStorage.getItem('SHAFFAF_refresh');
+        if (refresh) {
+            fetch('https://shaffaf-backend.onrender.com/api/auth/logout/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh })
+            });
+        }
+        // Bütün session məlumatlarını sil
+        localStorage.removeItem('SHAFFAF_access');
+        localStorage.removeItem('SHAFFAF_refresh');
+        localStorage.removeItem('SHAFFAF_role');
+        localStorage.removeItem('SHAFFAF_user_session');
+        sessionStorage.removeItem('SHAFFAF_session');
+    </script>
+
 </body>
 
 </html>
