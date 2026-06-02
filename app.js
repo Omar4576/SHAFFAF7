@@ -291,7 +291,7 @@ async function handleLogin() {
       type: data.user.role,
       loginAt: Date.now()
     };
-    sessionStorage.setItem('SHAFFAF_session', JSON.stringify(session));
+    localStorage.setItem('SHAFFAF_session', JSON.stringify(session));
     localStorage.setItem('SHAFFAF_role', data.user.role);
 
     closeModal();
@@ -363,18 +363,69 @@ async function handleSignup() {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
-  renderCompanies(COMPANIES);
+    renderCompanies(COMPANIES);
 
-  // Check session — update nav if logged in
-  const session = sessionStorage.getItem('SHAFFAF_session');
-  if (session) {
-    const s = JSON.parse(session);
-    const cta = document.querySelector('.nav-cta');
-    if (cta) {
-      cta.innerHTML = `
-        <span style="font-size:13px; color:var(--text-muted);">Hi, ${s.name}</span>
-        <a href="dashboard.html" class="btn btn-gold">Dashboard</a>
-      `;
+    // LocalStorage-dən yoxla
+    const session = localStorage.getItem('SHAFFAF_session');
+    
+    if (session) {
+        const s = JSON.parse(session);
+        
+        const cta = document.querySelector('.nav-cta');
+        if (cta) {
+            cta.innerHTML = `
+                <span style="font-size:13px; color:var(--text-muted);">Hi, ${s.name}</span>
+                <a href="dashboard.html" class="btn btn-gold">Dashboard</a>
+            `;
+        }
     }
-  }
 });
+
+
+async function checkAuth() {
+    const token = localStorage.getItem('SHAFFAF_access');
+    if (!token) {
+        // login səhifəsinə yönəlt
+        window.location.href = 'index.html';
+        return false;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/api/auth/verify/`, {  // və ya /me/ endpoint
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            // Token bitibsə refresh etməyə cəhd et
+            await refreshToken();
+        }
+    } catch (e) {
+        logout();
+    }
+}
+
+async function refreshToken() {
+    const refresh = localStorage.getItem('SHAFFAF_refresh');
+    if (!refresh) return logout();
+
+    const res = await fetch(`${API_URL}/api/auth/token/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+        localStorage.setItem('SHAFFAF_access', data.access);
+    } else {
+        logout();
+    }
+}
+
+function logout() {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = 'index.html';
+}
