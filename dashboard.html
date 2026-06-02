@@ -1175,9 +1175,9 @@
         const res = await fetch(`${API_URL}/api/auth/verify/`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({ token: accessToken })  // ← body-də göndər
         });
 
         if (res.ok) {
@@ -1192,7 +1192,7 @@
         }
       } catch (err) {
         console.error(err);
-        logout();
+        render(); // şəbəkə xətasında da render et
       }
     }
 
@@ -1201,7 +1201,7 @@
       if (!refresh) return false;
 
       try {
-        const res = await fetch(`${API_URL}/api/auth/token/refresh/`, {
+        const res = await fetch(`${API_URL}/api/auth/refresh/`, {  // ← /token/refresh/ deyil
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh })
