@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 import uuid
 
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -35,10 +36,28 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone      = models.CharField(max_length=30, blank=True)
     verified   = models.BooleanField(default=False)
     avatar     = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    
     is_active  = models.BooleanField(default=True)
     is_staff   = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # ==================== CLASH-İN QARŞISINI ALMAQ ÜÇÜN ====================
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='custom_user_groups',   # ← Vacib!
+        blank=True,
+        verbose_name='groups',
+        help_text='The groups this user belongs to.'
+    )
+
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='custom_user_permissions',   # ← Vacib!
+        blank=True,
+        verbose_name='user permissions',
+        help_text='Specific permissions for this user.'
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
