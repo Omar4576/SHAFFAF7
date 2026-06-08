@@ -140,3 +140,7 @@ TEMPLATES = [
         },
     },
 ]
+
+ROOT_URLCONF = 'shaffaf.urls'
+
+WSGI_APPLICATION = 'shaffaf.wsgi.application'
